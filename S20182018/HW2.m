@@ -1,6 +1,6 @@
 function [E] = HW2(N)
 
-m0=0.511*10^(6)/(2.99*10^8)^2; % Electron rest mass 
+m0=0.511*10^(6)/(3.00*10^8)^2; % Electron rest mass 
 h=6.582*10^(-16); % h-bar [eV*s]
 a=5*10^(-9); % Well width
 dx=a/(N-1); % Delta x
