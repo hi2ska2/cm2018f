@@ -19,8 +19,13 @@ for i=1:length(N);
 end
 
 
+subplot(2,1,1)
+plot(N,A(1,:),'r',N,A(2,:),'b')
+xlabel('discretization #')
+ylabel('ground energy [eV]')
+legend('Analitical','Numerical')
 
+subplot(2,1,2)
 semilogy(N,A(3,:))
 xlabel('discretization #')
 ylabel('ground energy error [eV]')
-
