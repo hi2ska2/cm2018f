@@ -1,0 +1,26 @@
+function [E_eV] = Lap_Oper(N)
+
+% Constant value
+h_bar = 6.62607004 * 10^(-34)/(2*pi); % m^2 kg/s
+m0 = 9.10938356 * 10^(-31); % electron rest mass kg
+m = 0.19*m0; % electron mass
+dx = 5 * 10^(-9)/(N-1); % Length
+
+A = zeros(N-2,N-2) ;
+
+% First and last line of Laplacian operator
+A(1,1) = -2.0; A(1,2) = 1.0 ;
+A(N-2,N-3) = 1.0; A(N-2,N-2) = -2.0 ;
+
+% The other line
+for ii = 2:N-3
+    A(ii,ii-1) = 1.0; A(ii,ii) = -2.0; A(ii,ii+1) = 1.0 ;
+end
+
+[V,D] = eig (A);
+
+d = min(D);
+d_min = min(abs(d));
+k_square = d_min/(dx^2);
+E = (k_square)*((h_bar^2)/(2*m));
+E_eV = E * 6.242*10^(18);
