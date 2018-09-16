@@ -1,0 +1,32 @@
+N = 5;
+
+%Thickness of two dielectric layers 5 nm
+l = 5*(10^(-7));
+% Vacuum Permittivity (F/cm)
+E0 = 8.8541878176*(10^(-14));
+% Relative Permittivity of SiC
+E1 = 9.66;
+% Relative Permittivity of Si3N4
+E2 = 7.5;
+
+A= zeros (N,N);
+A(1,1) = 1;
+A(N,N) = 1;
+for i = 2:N-1
+     if (i<(N-1)/2)
+        A(i,i-1) = E1 ; A(i,i) = -2*E1; A(i,i+1) = E1;
+    end
+    if (i==(N-1)/2)
+        A(i,i-1) = E1; A(i,i) = -E2-E1; A(i,i+1) = E2;
+    end
+    if (i>(N-1)/2)
+        A(i,i-1) = E2 ; A(i,i) = -2*E2; A(i,i+1) = E2;
+    end
+end
+b = zeros(N,1); b(N,1) = 1;
+x=inv(A)*b;
+
+% Capacitance per area of SiC
+C1 = E1*E0/(l/2);
+% Capacitance per area of Si3N4
+C2 = E2*E0/(l/2);
