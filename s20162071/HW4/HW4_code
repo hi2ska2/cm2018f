@@ -103,7 +103,7 @@ for j=1:11
     hold on;
 end
 xlabel('distance (nm)');
-ylabel('Updated potential (V)');
+ylabel('Electrostatic potential (V)');
 
 figure(3)
 for j=1:11
