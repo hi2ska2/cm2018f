@@ -1,0 +1,115 @@
+clc; clear all;
+
+%%% Set Parameter
+q = 1.602192e-19;           % elementary charge, C
+eps0 = 8.854187817e-12;     % Vacuum permitivity, F/m
+k_B = 1.380662e-23;         % Boltzmann constant, J/K
+T = 300.0;                  % Temperature, K
+Deltax = 0.1e-9;            % 0.1 nm spacing
+N = 61;                     % 6 nm thick
+x = Deltax*transpose([0:N-1]);  % real space, m
+interface1 = 6;             % At x=0.5 nm
+interface2 = 56;            % At x=5.5 nm
+eps_si = 11.7;  eps_ox = 3.9;   % Relative permittivity
+Nacc = 1e24;                % 1e18 /cm^3
+ni = 1.075e16;              % 1.075e10 /cm^3
+work_vac = 4.3;             % Work function under vacuum
+int_si = 4.63374;           % Work function under silicon
+v_bias = 1;                 % v_bias is varied from 0 to 1 with the 0.1 step
+
+A = zeros (N,N);
+b = zeros(N,11);
+elec = zeros(N,11);
+
+b_2nd = zeros(N,11);
+elec_2nd = zeros(N,11);
+
+for j=1:11
+%%% Set 'A' Matrix
+
+A(1,1) = 1.0;
+for ii=2:N-1
+    if     (ii <  interface1) A(ii,ii-1) = eps_ox;  A(ii,ii) = -2*eps_ox;       A(ii,ii+1) = eps_ox;
+    elseif (ii == interface1) A(ii,ii-1) = eps_ox;  A(ii,ii) = -eps_ox-eps_si;  A(ii,ii+1) = eps_si;
+    elseif (ii <  interface2) A(ii,ii-1) = eps_si;  A(ii,ii) = -2*eps_si;       A(ii,ii+1) = eps_si;
+    elseif (ii == interface2) A(ii,ii-1) = eps_si;  A(ii,ii) = -eps_si-eps_ox;  A(ii,ii+1) = eps_ox;
+    elseif (ii >  interface2) A(ii,ii-1) = eps_ox;  A(ii,ii) = -2*eps_ox;       A(ii,ii+1) = eps_ox;
+    end
+end
+A(N,N) = 1.0;
+
+
+%%% Initial poisson equation
+
+b(1,j) = - ( work_vac - int_si) - (j-1)/10;
+for ii = interface1:interface2                                          % only silicon region is doped
+    
+    if     (ii==interface1) b(ii,j) = Deltax*Deltax*q*Nacc/eps0*0.5;     % interface doping level
+    elseif (ii==interface2) b(ii,j) = Deltax*Deltax*q*Nacc/eps0*0.5;     % interface doping level
+    else                    b(ii,j) = Deltax*Deltax*q*Nacc/eps0;         % interface doping level    
+        
+    end
+end
+b(N,j) = - ( work_vac - int_si) - (j-1)/10;;
+
+%%% Calculation for electrostatic potential
+phi(:,j) = A\b(:,j);  
+
+
+for ii = interface1:interface2
+    elec(ii,j) = ni * exp(q*phi(ii,j)/(k_B*T));  % only silicon region that is doped is cacluated
+end
+
+
+
+b_2nd(1,j) = - ( work_vac - int_si) - (j-1)/10;;
+for ii = interface1:interface2                                          % only silicon region is doped
+    
+    if     (ii==interface1) b_2nd(ii,j) = Deltax*Deltax*q*(Nacc+elec(ii,j))/eps0*0.5;     % interface doping level
+    elseif (ii==interface2) b_2nd(ii,j) = Deltax*Deltax*q*(Nacc+elec(ii,j))/eps0*0.5;     % interface doping level
+    else                    b_2nd(ii,j) = Deltax*Deltax*q*(Nacc+elec(ii,j))/eps0;         % interface doping level    
+        
+    end
+end
+b_2nd(N,j) = - ( work_vac - int_si) - (j-1)/10;;
+
+
+phi_2nd(:,j) = A\b_2nd(:,j);
+
+
+for ii = interface1:interface2
+    elec_2nd(ii,j) = ni * exp(q*phi_2nd(ii,j)/(k_B*T));  % only silicon region that is doped is cacluated
+end
+
+end
+
+
+%%% Differnece between depletion assumption and consideration of fermi level variation
+diff_Electropotential(:,j) = phi(:,j)-phi_2nd(:,j);
+diff_Electrodensity(:,j) = elec(:,j)-elec_2nd(:,j);
+
+
+figure(1)
+for j=1:11
+    plot(x/1e-9,elec(:,j)/1e+6);
+    hold on;
+end
+xlabel('distance (nm)');
+ylabel('Electron density (cm^3)');
+
+figure(2)
+for j=1:11
+    plot(x/1e-9,phi_2nd(:,j));
+    hold on;
+end
+xlabel('distance (nm)');
+ylabel('Updated potential (V)');
+
+figure(3)
+for j=1:11
+    plot(x/1e-9,diff_Electropotential(:,j));
+    hold on;
+end
+xlabel('distance (nm)');
+ylim([-0.5e-5 3.5e-5])
+ylabel('Potential difference (V)');
