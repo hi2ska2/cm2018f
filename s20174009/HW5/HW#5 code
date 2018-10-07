@@ -1,0 +1,62 @@
+% For positive N+
+%% Parameter Value
+
+nint = 1e10;
+N_p = 10:0.1:18;
+Nplus = 1*10.^(N_p);
+Nminus = -1*10.^(N_p);
+V_T = 0.0259;
+a_p = [1:length(Nplus)];
+a_n = [1:length(Nplus)];
+N=1;
+
+%% Newton-Rhapson Method
+for i = Nplus
+    phi = 2;
+    for N_steps = 1:1000
+        f = i + nint*exp(-phi/V_T) - nint*exp(phi/V_T);
+        fprime = - nint/V_T*exp(-phi/V_T) - nint/V_T*exp(phi/V_T);
+        update = (-f)/fprime;
+        phi = phi + update;
+    end
+    a_p(N)=phi;
+    N = N+1;
+end
+%%
+semilogx(Nplus,a_p,'o')
+
+title('Electrostatic Potential by Using Newton Rhapson Method')
+xlabel('Dopant Density')
+ylabel('Electrostatic Potential (V)')
+
+% For negative N+
+
+%% Parameter Value
+
+nint = 1e10;
+N_p = 10:0.1:18;
+Nplus = 1*10.^(N_p);
+Nminus = -1*10.^(N_p);
+V_T = 0.0259;
+a_p = [1:length(Nplus)];
+a_n = [1:length(Nplus)];
+N=1;
+
+%% Newton-Rhapson Method
+for i = Nminus
+    phi = -2;
+    for N_steps = 1:1000
+        f = i + nint*exp(-phi/V_T) - nint*exp(phi/V_T);
+        fprime = - nint/V_T*exp(-phi/V_T) - nint/V_T*exp(phi/V_T);
+        update = (-f)/fprime;
+        phi = phi + update;
+    end
+    a_p(N)=phi;
+    N = N+1;
+end
+%%
+semilogx(Nplus,a_p,'o')
+
+title('Electrostatic Potential by Using Newton Rhapson Method')
+xlabel('Dopant Density')
+ylabel('Electrostatic Potential (V)')
