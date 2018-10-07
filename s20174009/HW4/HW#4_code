@@ -1,0 +1,81 @@
+% Zero Gate Voltage 
+
+q = 1.602192e-19; % Elementary charge, C
+eps0 = 8.854187817e-12; % Vacuum permittivity, F/m
+k_B = 1.380662e-23; % Boltzmann constant, J/K
+T = 300.0; % Temperature, K
+Deltax = 0.1e-9; % 0.1 nm spacing
+N = 61; % 6 nm thick
+x = Deltax*transpose([0:N-1]); % real space, m
+interface1 = 6; % At x = 0.5 nm
+interface2 = 56; % At x = 5.5 nm
+eps_si = 11.7; eps_ox = 3.9; % Relative permittivity
+Nacc = 1e24; % 1e18/cm^3
+ni = 1.075e16; % 1.075e10/cm^3
+
+A = zeros (N,N);
+A(1,1) = 1.0;
+for ii = 2:N-1
+    if    (ii< interface1) A(ii,ii-1) = eps_ox;    A(ii,ii) = -2*eps_ox;        A(ii,ii+1) = eps_ox;
+    elseif(ii==interface1) A(ii,ii-1) = eps_ox;    A(ii,ii) = -eps_ox- eps_si;  A(ii,ii+1) = eps_si;
+    elseif(ii< interface2) A(ii,ii-1) = eps_si;    A(ii,ii) = -2*eps_si;        A(ii,ii+1) = eps_si;
+    elseif(ii==interface2) A(ii,ii-1) = eps_si;    A(ii,ii) = -eps_si- eps_ox;  A(ii,ii+1) = eps_ox;   
+    elseif(ii> interface2) A(ii,ii-1) = eps_ox;    A(ii,ii) = -2*eps_ox;        A(ii,ii+1) = eps_ox;  
+    end
+end
+A(N,N) = 1.0;
+
+% Boundary value of the electrostatic potential 
+b = zeros (N,11);
+for j = 1:11;
+    b(1,j) = 0.33374 - (j-1)/10;
+    for ii=interface1:interface2
+        if     (ii==interface1) b(ii,j) = Deltax*Deltax*q*Nacc/eps0*0.5;
+        elseif (ii==interface2) b(ii,j) = Deltax*Deltax*q*Nacc/eps0*0.5;
+        else                    b(ii,j) = Deltax*Deltax*q*Nacc/eps0;
+        end
+    end
+    b(N,j) = 0.33374 - (j-1)/10;
+    phi(:,j) = inv(A)*b(:,j);
+end
+
+% Electron density 
+
+elec = zeros (N,11);
+for j=1:11;
+    for ii=interface1:interface2
+        elec(ii,j) = ni*exp(q*phi(ii,j)/(k_B*T));
+    end
+end 
+
+%Re-calculation of potential by using calculated carrier density
+
+b_rc = zeros(N,11);
+for j=1:11;
+    b_rc(1,j) = 0.33374 - (j-1)/10;
+% Carrier density = qp(x)-qn(x)-qN+dop(x)
+    for ii=interface1:interface2
+        if     (ii==interface1) b_rc(ii,j) = Deltax*Deltax*q*(Nacc+elec(ii,j))/eps0*0.5;
+        elseif (ii==interface2) b_rc(ii,j) = Deltax*Deltax*q*(Nacc*elec(ii,j))/eps0*0.5;
+        else                    b_rc(ii,j) = Deltax*Deltax*q*(Nacc*elec(ii,j))/eps0;
+        end
+    end
+    b_rc(N,j) = 0.33374 - (j-1)/10;
+    phi_rc(:,j) = inv(A)*b_rc(:,j); % Re-calculated potential
+    for i=1:N
+        phi_diff(i,j) = phi(i,j)-phi_rc(i,j); % Difference between initial potential and re-calcualted potential
+    end
+end
+
+
+
+
+figure(1)
+for j= 1:11
+    plot(x/1e-9,phi_diff(:,j));
+    hold all;
+end
+title ('Potential difference over gate voltages')
+xlabel('Position (nm)');
+ylabel('Potential Difference (V)');
+legend('0 V','0.1 V','0.2 V','0.3 V','0.4 V','0.5 V','0.6 V','0.7 V','0.8 V','0.9 V','1.0 V')
