@@ -1,0 +1,101 @@
+%% Variables
+
+q = 1.602192e-19; % Elementary charge, C
+eps0 = 8.854187817e-12; % Vacuum permittivity, F/m
+k_B = 1.380662e-23; % Boltzmann constant, J/K
+T = 300.0; % Temperature, K
+thermal = k_B*T/q; % Thermal voltage, V
+Deltax = 0.1e-9; % 0.1 nm spacing
+N = 61; % 6 nm thick
+x = Deltax*transpose([0:N-1]); % real space, m
+interface1 = 6; % At x = 0.5 nm
+interface2 = 56; % At x = 5.5 nm
+eps_si = 11.7; eps_ox = 3.9; % Relative permittivity
+Nacc = 1e24; % 1e18/cm^3
+ni = 1.075e16; % 1.075e10/cm^3
+coef = Deltax*Deltax*q/eps0;
+
+%% Boundary conditions
+
+res = zeros(N,11);
+Jaco = sparse(N,N);
+Jaco(1,1) = 1.0;
+Jaco(N,N) = 1.0;
+
+phi = zeros(N,11);
+for j = 1:11
+    phi(1,j) = 0.33374-(j-1)/10;
+    phi(N,j) = 0.33374-(j-1)/10;
+
+end
+
+%% Newton Method
+    for j = 1:11
+
+        for newton = 1:10
+
+   
+            for ii=2:N-1
+                if(ii< interface1 || ii> interface2)
+                    res(ii,j) = eps_ox*phi(ii+1,j) - 2*eps_ox*phi(ii,j) + eps_ox*phi(ii-1,j);
+                    Jaco(ii,ii-1) = eps_ox; Jaco(ii,ii) = -2*eps_ox; Jaco (ii,ii+1) = eps_ox;
+                elseif(ii==interface1)
+                    res(ii,j) = eps_si*phi(ii+1,j) - (eps_si+eps_ox)*phi(ii,j) + eps_ox*phi(ii-1,j);
+                    Jaco(ii,ii-1) = eps_ox; Jaco(ii,ii) = -(eps_si+eps_ox); Jaco(ii,ii+1) = eps_si;
+                elseif(ii==interface2)
+                    res(ii,j) = eps_ox*phi(ii+1,j) - (eps_ox+eps_si)*phi(ii,j) + eps_si*phi(ii-1,j);
+                    Jaco(ii,ii-1) = eps_si; Jaco(ii,ii) = -(eps_ox+eps_si); Jaco(ii,ii+1) = eps_ox;
+                else
+                    res(ii,j) = eps_si*phi(ii+1,j) - 2*eps_si*phi(ii,j) + eps_si*phi(ii-1,j);
+                    Jaco(ii,ii-1) = eps_si; Jaco(ii,ii) = -2*eps_si; Jaco(ii,ii+1) = eps_si;
+                end
+            end
+        
+        %% Charge Part
+        
+            for ii=interface1:interface2
+                if (ii==interface1)
+                    res(ii,j) = res(ii,j) - coef*(Nacc+ni*exp(phi(ii,j)/thermal))*0.5;
+                    Jaco(ii,ii) = Jaco(ii,ii) - coef*ni*exp(phi(ii,j)/thermal)/thermal*0.5;
+                elseif(ii==interface2)
+                    res(ii,j) = res(ii,j) - coef*(Nacc+ni*exp(phi(ii,j)/thermal))*0.5;
+                    Jaco(ii,ii) = Jaco(ii,ii) - coef*ni*exp(phi(ii,j)/thermal)/thermal*0.5;
+                else
+                    res(ii,j) = res(ii,j) - coef*(Nacc+ni*exp(phi(ii,j)/thermal));
+                    Jaco(ii,ii) = Jaco(ii,ii) - coef*ni*exp(phi(ii,j)/thermal)/thermal;
+                end
+            end
+            update(:,j) = inv(Jaco)*(-res(:,j));
+            phi(:,j) = phi(:,j) + update(:,j);
+        end
+        
+    end
+
+
+%% Electron density 
+
+elec = zeros (N,11);
+for j=1:11;
+    for ii=interface1:interface2
+        elec(ii,j) = ni*exp(q*phi(ii,j)/(k_B*T));
+    end
+end 
+
+int_elec = sum(elec);
+
+figure(1)
+for j= 1:6
+    plot(x/1e-9,phi(:,j));
+    hold all;
+end
+title ('Potential difference over gate voltages')
+xlabel('Position (nm)');
+ylabel('Potential (V)');
+legend('0 V','0.1 V','0.2 V','0.3 V','0.4 V','0.5 V')
+
+a = linspace(0,1,11);
+figure(2)
+semilogy(a,int_elec);
+title('Integrated electron density')
+xlabel('Gate voltage (V)')
+ylabel('Electron density (cm-3)')
