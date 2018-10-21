@@ -1,0 +1,63 @@
+
+%% Parameters
+
+h = 6.626176e-34; % Planck constant, J s
+hbar = h/(2*pi); % Reduced Planck constant, J s
+q = 1.602192e-19; % Elementary charge, C
+m0 = 9.109534e-31; % Electron rest mass, kg
+k_B = 1.380662e-23; % Boltzmann constant, J/K
+T = 300.0; % Temperature, K
+
+Lx = 100e-9; Ly=100e-9; Lz = 5e-9; % Lengths, m
+mxx = 0.19; myy = 0.19; mzz= 0.91; % Masses, m0
+nmax =10;
+coef = 2*Lx*Ly/(2*pi)*sqrt(mxx*myy)*m0/(hbar^2)*(k_B*T);
+
+%% electron density
+
+Nz = 51;
+z = transpose([0:Nz-1])*Lz/(Nz-1);
+dz = Lz/(Nz-1);
+elec = zeros(Nz,21);
+Fermi(1,21) = zeros;
+Int_n(1,21) = zeros;
+for j=1:21
+    Fermi(1,j) = 0.01*(11-j);
+    totalnumber = 0;
+    for n=1:nmax
+        Ez = (hbar^2)/(2*mzz*m0)*(pi*n/Lz)^2 ;
+        subbandnumber = coef*log(1+exp((-Ez+(Fermi(1,j)*q))/(k_B*T)));
+        totalnumber = totalnumber + subbandnumber;
+        elec(:,j) = elec(:,j) + 2/(Lx*Ly*Lz)*(sin(n*pi*z/Lz).^2)*subbandnumber;
+    end
+   
+   
+end
+%% Plot
+
+for j = 1:11
+    figure(1)
+    plot(z/1e-9,elec(:,j)/1e6)
+    hold all;
+end
+
+xlabel('z (nm)')
+ylabel('electron density (cm^-^3)');
+legend('- 0.1 eV','- 0.09 eV','- 0.08 eV','- 0.07 eV','- 0.06 eV','- 0.05 eV','- 0.04 eV','- 0.03 eV','- 0.02 eV','- 0.01 eV','0 eV');
+
+for j = 11:21
+    figure(2)
+    plot(z/1e-9,elec(:,j)/1e6)
+    hold all;
+end
+
+xlabel('z (nm)')
+ylabel('electron density (cm^-^3)');
+legend('0 eV','0.01 eV','0.02 eV','0.03 eV','0.04 eV','0.05 eV','0.06 eV','0.07 eV','0.08 eV','0.09 eV','0.1 eV');
+
+
+int_n = sum(elec)*dz;
+figure(3)
+semilogy(Fermi(1,:),int_n(1,:)/1e4);
+xlabel('Fermi energy (eV)');
+ylabel('Integrated electron density (cm^-^2)');
