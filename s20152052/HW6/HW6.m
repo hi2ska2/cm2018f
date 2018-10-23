@@ -23,7 +23,7 @@ elec=zeros(N,1);
 
 for j=1:length(V_appl)
     
-    V_g(j,1)=((WF-V_appl(j,1))-IF); % applied gate voltage  [V]
+    V_g(j,1)=0-((IF-WF-V_appl(j,1))); % applied gate voltage  [V]
 %% boundary condition
 phi=zeros(N,1);
 phi(:,1)=V_g(j,1); % initial value
@@ -86,11 +86,14 @@ count(j,1)=count(j,1);
 
 
 for ii=interface1:interface2
+%     elec(ii,j)=ni*exp(q*phi(ii,1)/(k_B*T))*1e-6;
+%     
     elec(ii,j)=ni*exp(q*phi(ii,1)/(k_B*T));
 end
 end
 
-elec_int=sum(elec,1)*1e-6*5e-7; % integrated carrier density, cm^-2
+% elec_int=sum(elec,1)*1e-6*5e-7; % integrated carrier density, cm^-2
+elec_int=sum(elec*0.1e-9,1); % integrated carrier density, m^-2
 
 f1=figure
 plot(x/1e-9,phi1) % position vs potential
@@ -103,7 +106,7 @@ xlabel('Position (nm)')
 ylabel('Electron density (cm^-^3)')
 
 f3=figure
-semilogy(V_g,elec_int); % Gate voltage vs integrated electron density
+semilogy(V_appl,elec_int*1e-4); % Gate voltage vs integrated electron density
 xlabel('Gate Voltage')
 ylabel('Electron density (cm^-^2)')
 
@@ -111,50 +114,55 @@ ylabel('Electron density (cm^-^2)')
 
 
 
-%% Compare #4 potential % electron density
-for j=1:length(V_appl);
-A(1,1)=1.0;
-for ii=2:N-1
-    if     (ii<interface1)  A(ii,ii-1)=eps_ox; A(ii,ii)=-2*eps_ox;      A(ii,ii+1)=eps_ox;
-    elseif (ii==interface1) A(ii,ii-1)=eps_ox; A(ii,ii)=-eps_ox-eps_si; A(ii,ii+1)=eps_si;
-    elseif (ii<interface2)  A(ii,ii-1)=eps_si; A(ii,ii)=-2*eps_si;      A(ii,ii+1)=eps_si;
-    elseif (ii==interface2) A(ii,ii-1)=eps_si; A(ii,ii)=-eps_si-eps_ox; A(ii,ii+1)=eps_ox;
-    elseif (ii>interface2)  A(ii,ii-1)=eps_ox; A(ii,ii)=-2*eps_ox;      A(ii,ii+1)=eps_ox;
-    end
-end
-A(N,N)=1.0;
-
-%%%%%%%%%%%%%%%% first cacluation of Poisson's equation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-b=zeros(N,1);
-b(1,j)=V_g(j,1);
-for ii=interface1:interface2
-    if     (ii==interface1) b(ii,j)=Deltax*Deltax*q*Nacc/eps0*0.5;
-    elseif (ii==interface2) b(ii,j)=Deltax*Deltax*q*Nacc/eps0*0.5;
-    else                    b(ii,j)=Deltax*Deltax*q*Nacc/eps0;
-    end
-end
-b(N,j)=V_g(j,1);
-
-phi_pre(:,j)=A\b(:,j);
-
-
-%%%%%%%%% carrier density calculated from Poisson's equation and Boltzmann distribution%%%%%%%%%%%%%%%%%%%%%%%%
-elec_pre=zeros(N,1);
-for ii=interface1:interface2
-    elec_pre(ii,1)=ni*exp(q*phi_pre(ii,j)/(k_B*T));
-end
-elec_pre1(:,j)=elec_pre(:,1);
-
-end
-
-
-f4=figure
-plot(x/1e-9,(elec-elec_pre1)*1e-6)
-xlabel('Position (nm)')
-ylabel('Difference of electron density (cm^-^3)')
-
-
-f5=figure
-plot(x/1e-9,phi1-phi_pre)
-xlabel('Position (nm)')
-ylabel('Difference of potential (V)')
+% %% Compare #4 potential % electron density
+% for j=1:length(V_appl);
+% A(1,1)=1.0;
+% for ii=2:N-1
+%     if     (ii<interface1)  A(ii,ii-1)=eps_ox; A(ii,ii)=-2*eps_ox;      A(ii,ii+1)=eps_ox;
+%     elseif (ii==interface1) A(ii,ii-1)=eps_ox; A(ii,ii)=-eps_ox-eps_si; A(ii,ii+1)=eps_si;
+%     elseif (ii<interface2)  A(ii,ii-1)=eps_si; A(ii,ii)=-2*eps_si;      A(ii,ii+1)=eps_si;
+%     elseif (ii==interface2) A(ii,ii-1)=eps_si; A(ii,ii)=-eps_si-eps_ox; A(ii,ii+1)=eps_ox;
+%     elseif (ii>interface2)  A(ii,ii-1)=eps_ox; A(ii,ii)=-2*eps_ox;      A(ii,ii+1)=eps_ox;
+%     end
+% end
+% A(N,N)=1.0;
+% 
+% %%%%%%%%%%%%%%%% first cacluation of Poisson's equation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% b=zeros(N,1);
+% b(1,j)=V_g(j,1);
+% for ii=interface1:interface2
+%     if     (ii==interface1) b(ii,j)=Deltax*Deltax*q*Nacc/eps0*0.5;
+%     elseif (ii==interface2) b(ii,j)=Deltax*Deltax*q*Nacc/eps0*0.5;
+%     else                    b(ii,j)=Deltax*Deltax*q*Nacc/eps0;
+%     end
+% end
+% b(N,j)=V_g(j,1);
+% 
+% phi_pre(:,j)=A\b(:,j);
+% 
+% 
+% %%%%%%%%% carrier density calculated from Poisson's equation and Boltzmann distribution%%%%%%%%%%%%%%%%%%%%%%%%
+% elec_pre=zeros(N,1);
+% for ii=interface1:interface2
+%     elec_pre(ii,1)=ni*exp(q*phi_pre(ii,j)/(k_B*T));
+% end
+% elec_pre1(:,j)=elec_pre(:,1);
+% 
+% end
+% 
+% f4=figure 
+% plot(x/1e-9,elec_pre1*1e-6);
+% xlabel('Position (nm)')
+% ylabel('Electron density (cm^-^3)')
+% 
+% 
+% f5=figure
+% plot(x/1e-9,(elec-elec_pre1)*1e-6)
+% xlabel('Position (nm)')
+% ylabel('Difference of electron density (cm^-^3)')
+% 
+% 
+% f6=figure
+% plot(x/1e-9,phi1-phi_pre)
+% xlabel('Position (nm)')
+% ylabel('Difference of potential (V)')
