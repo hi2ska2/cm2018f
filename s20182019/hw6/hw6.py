@@ -80,6 +80,7 @@ for j in range(101):
     
     phi[j] = phi_now
 
+
     for i in range(mid1,mid2+1):
         e_d[j][i] = Ni * np.exp(phi_now[i]/Vt)
         if i is mid1 or i is mid2:
@@ -87,14 +88,17 @@ for j in range(101):
         else:
             e_d_int[j] += dx*e_d[j][i]
 
-#    f = open("d"+str(j)+".dat",'w')
-#    for k in range(N):
-#        f.write("{}\t{}\n".format(k,phi_now[k]))
+    f = open("d"+str(j)+".dat",'w')
+    for k in range(N):
+        f.write("{}\t{}\n".format(k,e_d[0][k]))
 
 f = open("integrated_density.dat",'w')
 for j in range(101):
     f.write("{}\t{}\n".format(0.01*j,e_d_int[j]))
 f.close()
 
-
+f = open("phi.dat",'w')
+for j in range(N):
+    f.write("{}\t{}\n".format(j,phi[100][j]))
+f.close()
 
