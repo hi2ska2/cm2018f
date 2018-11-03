@@ -34,6 +34,7 @@ for E_f in E_F:
     N_total = np.sum(value)
     subband = 2/(Lx*Ly*Lz)*(np.sin(np.outer(n_values,z)*np.pi/Lz))**2   # n_values * 51 matrix
     e_d = np.matmul(value,subband)  #1*51 matrix, electron density
+    print(value.shape,subband.shape)
     e_d_int = np.append(e_d_int, np.sum(e_d)*dz)
     
     f = open('density_'+str(index)+'.dat','w')
