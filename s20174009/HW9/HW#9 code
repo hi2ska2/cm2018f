@@ -1,0 +1,38 @@
+Ny = 9;
+Nz = 5;
+
+psi1 = zeros(Nz,Ny);
+psi2 = zeros(Nz,Ny);
+psi3 = zeros(Nz,Ny);
+psi4 = zeros(Nz,Ny);
+psiprime = zeros(Nz,Ny);
+
+psi1(Nz,Ny-1) = 1; psi1(Nz,Ny) = 1; % case 1
+psi2(Nz,1) = 1; psi2(Nz,2) = 1;     % case 2
+psi3(1,:) = 1;                      % case 3
+psi4(1,:) = 1; psi4(Nz,1) = 1; psi4(Nz,2) = 1; psi4(Nz,Ny-1) = 1; psi4(Nz,Ny) = 1; % case 4
+
+psi = psi4;
+psiprime = psi;
+
+for newton = 1:1000       
+    for j = 1 : Nz
+        for i = 1: Ny
+            if 1<i && i<Ny && 1<j && j<Nz % bulk
+                    psiprime(j,i) = 0.25*(psi(j+1,i) + psi(j,i+1) + psi(j-1,i) + psi(j,i-1));
+            elseif i==1 && 1<j && j<Nz % leftside
+                    psiprime(j,i) = 0.25*(2*psi(j,i+1)+psi(j+1,i)+psi(j-1,i));
+            elseif i==Ny && 1<j && j<Nz % right side 
+                    psiprime(j,i) = 0.25*(2*psi(j,i-1)+psi(j+1,i)+psi(j-1,i));                   
+            elseif j==Nz && 2<i && i<Ny-1 % top side
+                    psiprime(j,i) = 0.25*(2*psi(j-1,i)+psi(j,i+1)+psi(j,i-1));
+            end
+        end
+    end
+    psi = psiprime;
+ end
+        
+surf(psi)
+xlabel('Ny'); 
+ylabel('Nz');
+zlabel('psi4');
