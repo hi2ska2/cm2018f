@@ -23,9 +23,15 @@ for jj=1:6
         N = 61; Deltax = 2e-9; x_12 = 21; x_23 = 41;
     end
     x = Deltax*transpose([0:N-1]); % real space, m
-    Ndon = 2e21*ones(N,1); % 2e15 /cm^3
-    Ndon(1:x_12,1) = 5e23; % 5e17 /cm^3
-    Ndon(x_23:N,1) = 5e23; % 5e17 /cm^3
+    if jj>=1 && jj<=3
+        Ndon = 2e21*ones(N,1); % 2e15 /cm^3
+        Ndon(1:x_12,1) = 5e23; % 5e17 /cm^3
+        Ndon(x_23:N,1) = 5e23; % 5e17 /cm^3
+    elseif jj>=4 && jj<=6
+        Ndon = 2e23*ones(N,1); % 2e17 /cm^3
+        Ndon(1:x_12,1) = 5e25; % 5e19 /cm^3
+        Ndon(x_23:N,1) = 5e25; % 5e19 /cm^3
+    end
     coef = Deltax*Deltax*q/eps0;
     phi=zeros(N,1);
     
@@ -36,7 +42,7 @@ for jj=1:6
     err = 1;
     
     
-    while err > 5e-17
+    while err > 1e-16
         count(jj,1) = count(jj,1)+1;
         res = zeros(2*N,1);
         Jaco = sparse(2*N,2*N);
@@ -121,7 +127,7 @@ for jj=1:6
         end
         xlabel('Position (nm)');
         ylabel('n_{Self-consistent} - n_{Nonlinear Poisson} (cm^{-3})');
-           legend('0.2 nm spacing','1 nm spacing', '5 nm spacing');
+        legend('0.2 nm spacing','1 nm spacing', '5 nm spacing');
     end
     
 end
