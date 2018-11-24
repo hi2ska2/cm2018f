@@ -1,0 +1,52 @@
+q = 1.602192e-19; % Elementary charge, C
+k_B = 1.380662e-23; % Boltzmann constant, J/K
+T = 300.0; % Temperature, K
+tau = 1e-14;
+v = 1e+9;
+
+N = 301;
+interface1 = 101;
+interface2 = 201;
+
+f1 = zeros(N-2,N);
+
+H = (linspace(0.1,1,N))'; % (eV)
+VD = 0.001; % (V)
+V = zeros(N,1);
+V(interface1:interface2,1) = [0:1/(interface2-interface1):1]*VD;
+V(interface2:N,1) = VD;
+
+for jj = 1:N
+    fs(jj,1) = sqrt(2*pi)/(1 + exp(q*H(jj,1)/(k_B*T)));
+    fd(jj,1) = sqrt(2*pi)/(1 + exp(q*(H(jj,1)+VD)/(k_B*T)));
+    
+    A = zeros(N,N);
+    A(1,1) = 1.0;
+    
+    for ii=2:N-1
+        c1 = H(jj,1) + 0.5*(V(ii,1)+V(ii-1,1));
+        c2 = H(jj,1) + 0.5*(V(ii+1,1)+V(ii,1));
+        A(ii,ii-1) = c1; A(ii,ii) = -c1-c2; A(ii,ii+1) = c2;
+    end
+    A(N,N) = 1.0;
+    
+    b = zeros(N,1);
+    b(1,1) = fs(jj,1);
+    b(N,1) = fd(jj,1);
+    
+    f0(:,jj) = A\b;
+    
+    for kk = 1:N-2
+        f1(kk,jj) = -tau*v*(1/sqrt(pi))*(f0(kk+2,jj) - f0(kk,jj))/(2e-10);
+    end
+end
+
+x1 = (linspace(0,N-1,N)*1e-1)'; % Unit nm
+x2 = (linspace(1,N-2,N-2)*1e-1)'; % Unit nm
+
+figure(1)
+mesh(H*1000,x1,f0)
+xlabel('H (meV)'); ylabel('Position (nm)'); zlabel('f_{0}');
+figure(2)
+mesh(H*1000,x2,f1)
+xlabel('H (meV)'); ylabel('Position (nm)'); zlabel('f_{1}');
