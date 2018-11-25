@@ -147,7 +147,7 @@ Deltax = 1e-9;
 xs_12 = 41; %At x=40nm
 xs_23 = 81; %At x=80nm
 
-%N = 13;
+%N = 25;
 Deltax = 5e-9;
-xs_12 = 5; %At x=40nm
-xs_23 = 9; %At x=80nm
+xs_12 = 9; %At x=40nm
+xs_23 = 17; %At x=80nm
