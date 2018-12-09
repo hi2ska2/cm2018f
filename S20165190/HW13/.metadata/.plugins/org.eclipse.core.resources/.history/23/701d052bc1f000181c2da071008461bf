@@ -1,0 +1,109 @@
+/*
+ * hw12.cpp
+ *
+ *  Created on: 2018. 11. 25.
+ *      Author: han
+ */
+
+#include "LA.h"
+#include "const.cpp"
+
+double *NPeq(void);
+double **SCeq(double *phi);
+int main(int argc, char* argv[]){
+	double *phi = new double[N];
+	phi = NPeq();
+
+
+	return 0;
+}
+
+double *NPeq(void)
+{
+	LA jaco(N);
+	double *phi = new double[N], *res = new double[N], *update;
+	double *Ndon = new double[N];
+
+	for(int i = 0; i < N; i++)
+	{
+		if(i <= interface1 || i >= interface2) Ndon[i] = Hdop;
+		else Ndon[i] = Ldop;
+	}
+
+	for(int i = 0; i < N; i++) phi[i] = thermal*log(Ndon[i]/ni);
+	for(int r = 0; r < VN; r++)
+	{
+		for(int i = 0; i < N; i++) res[i] = 0;
+
+		res[0] = phi[0] - thermal*log(Ndon[0]/ni);
+		jaco(0,0) = 1.0;
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] = eSi*(phi[i+1] - 2*phi[i] + phi[i-1]);
+			jaco(i,i-1) = eSi;
+			jaco(i,i) = -2.0*eSi;
+			jaco(i,i+1) = eSi;
+		}
+		res[N-1] = phi[N-1] - thermal*log(Ndon[N-1]/ni);
+		jaco(N-1, N-1) = 1.0;
+
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] -= coef*(-Ndon[i]+ni*exp(phi[i]/thermal));
+			jaco(i,i) -= coef*ni*exp(phi[i]/thermal)/thermal;
+		}
+		update = -jaco / (res);
+		for(int i = 0; i < N; i++) phi[i] += update[i];
+	}
+
+	jaco.~LA();
+	delete(res, Ndon);
+
+	return phi;
+}
+
+
+double **SCeq(double *phi)
+{
+	double **temp = new double*[2];
+
+	LA jaco(N);
+	double *res = new double[N], *update;
+	double *Ndon = new double[N];
+
+	for(int i = 0; i < N; i++)
+	{
+		if(i <= interface1 || i >= interface2) Ndon[i] = Hdop;
+		else Ndon[i] = Ldop;
+	}
+
+	for(int i = 0; i < N; i++) phi[i] = thermal*log(Ndon[i]/ni);
+	for(int r = 0; r < VN; r++)
+	{
+		for(int i = 0; i < N; i++) res[i] = 0;
+
+		res[0] = phi[0] - thermal*log(Ndon[0]/ni);
+		jaco(0,0) = 1.0;
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] = eSi*(phi[i+1] - 2*phi[i] + phi[i-1]);
+			jaco(i,i-1) = eSi;
+			jaco(i,i) = -2.0*eSi;
+			jaco(i,i+1) = eSi;
+		}
+		res[N-1] = phi[N-1] - thermal*log(Ndon[N-1]/ni);
+		jaco(N-1, N-1) = 1.0;
+
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] -= coef*(-Ndon[i]+ni*exp(phi[i]/thermal));
+			jaco(i,i) -= coef*ni*exp(phi[i]/thermal)/thermal;
+		}
+		update = -jaco / (res);
+		for(int i = 0; i < N; i++) phi[i] += update[i];
+	}
+
+	jaco.~LA();
+	delete(res, Ndon);
+}
+

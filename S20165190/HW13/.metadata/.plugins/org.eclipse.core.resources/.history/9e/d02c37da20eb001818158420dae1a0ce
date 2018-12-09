@@ -1,0 +1,25 @@
+/*
+ * main.cpp
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+
+#include "hw11.h"
+
+#include <cmath>
+#include <cstdlib>
+
+int main(int argc, char *argv[]){
+
+}
+
+double* F_0(double& VD){
+	double *temp = A;
+	double fs = sqrt((2*pi)/(1+exp(q*H(k_B*T)));
+
+	return temp;
+}
+
+
+

@@ -1,0 +1,41 @@
+/*
+ * const.cpp
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+
+#include "LA.h"
+
+// Constants
+const double q = 1.602192e-19; // Elementary charge, C
+const double eps0 = 8.854187817e-12; // Vacuum permittivity, F/m
+const double k_B = 1.380662e-23; // Boltzmann constant, J/K
+const double pi = 3.141592; // PI
+const double ni = 1.075e16; // Intrinsic electron density, /m^3
+const double eSi = 11.7; const double eOx = 3.9; // Relative permittivity
+
+// Settings
+const double Length = 600e-9; // Length of system, m
+const double T = 300; // Temperature, K
+const double thermal = k_B*T/q; // Thermal voltage, V
+
+// Discretization
+const int N = 601;
+const int VN = 10;
+const int interface1 = 100;
+const int interface2 = 200;
+const double termx = Length/(N-1);
+const double coef = termx*termx*q/eps0;
+double *Ndon;
+
+void SetNdon(void){
+	double *temp = new double[N];
+	for(int i = 0; i < N; i++)
+	{
+		if(i <= interface1 || i >= interface2) temp[i] = 5e23;
+		else temp[i] = 2e21;
+	}
+	Ndon = temp;
+}
+
