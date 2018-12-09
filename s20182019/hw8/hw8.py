@@ -89,6 +89,7 @@ for Vg in Vg_grid:
 
         update = np.dot(inv(J),-res)
         phi = phi + update
+        print(np.abs(J-J.T))
     ed1[mid1:mid2+1] = Ni*np.exp(phi[mid1:mid2+1]/Vt)
     
     f_cl.write("{}\t{}\n".format(Vg,np.sum(ed1*dz)))
