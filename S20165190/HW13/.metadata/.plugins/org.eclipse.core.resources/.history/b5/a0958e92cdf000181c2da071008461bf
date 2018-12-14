@@ -1,0 +1,144 @@
+/*
+ * hw12.cpp
+ *
+ *  Created on: 2018. 11. 25.
+ *      Author: han
+ */
+
+#include "LA.h"
+#include "const.cpp"
+
+double *NPeq(void);
+double *SCeq(double *phi);
+
+int main(int argc, char* argv[]){
+	double *phi = new double[N], *elec;
+	phi = NPeq();
+
+	for(int i = 0; i < N; i++) cout << phi[i] << endl;
+
+	elec = SCeq(phi);
+
+
+
+	return 0;
+}
+
+double *NPeq(void)
+{
+	LA jaco(N);
+	double *phi = new double[N], *res = new double[N], *update;
+	double *Ndon = new double[N];
+
+	for(int i = 0; i < N; i++)
+	{
+		if(i <= interface1 || i >= interface2) Ndon[i] = Hdop;
+		else Ndon[i] = Ldop;
+	}
+
+	for(int i = 0; i < N; i++) phi[i] = thermal*log(Ndon[i]/ni);
+	for(int r = 0; r < VN; r++)
+	{
+		for(int i = 0; i < N; i++) res[i] = 0;
+
+		res[0] = phi[0] - thermal*log(Ndon[0]/ni);
+		jaco(0,0) = 1.0;
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] = eSi*(phi[i+1] - 2*phi[i] + phi[i-1]);
+			jaco(i,i-1) = eSi;
+			jaco(i,i) = -2.0*eSi;
+			jaco(i,i+1) = eSi;
+		}
+		res[N-1] = phi[N-1] - thermal*log(Ndon[N-1]/ni);
+		jaco(N-1, N-1) = 1.0;
+
+		for(int i = 1; i < N-1; i++)
+		{
+			res[i] -= coef*(-Ndon[i]+ni*exp(phi[i]/thermal));
+			jaco(i,i) -= coef*ni*exp(phi[i]/thermal)/thermal;
+		}
+		update = -jaco / (res);
+		for(int i = 0; i < N; i++) phi[i] += update[i];
+	}
+
+	jaco.~LA();
+
+	return phi;
+}
+
+
+double *SCeq(double *phi)
+{
+
+	LA jaco(2*N);
+	double *res = new double[2*N], *update, *elec = new double[N];
+	double *Ndon = new double[N], *Cvector = new double[2*N], *Rvector = new double[2*N];
+	double n_av, dphidx, delecdx, Jn, sum;
+
+	for(int i = 0; i < N; i++)
+	{
+		if(i <= interface1 || i >= interface2) Ndon[i] = Hdop;
+		else Ndon[i] = Ldop;
+		elec[i] = ni*exp(phi[i]/thermal);
+	}
+
+	for(int r = 0; r < VN; r++)
+	{
+		for(int i = 0; i < 2*N; i++) res[i] = 0;
+
+		res[0] = phi[0] - thermal*log(Ndon[0]/ni);
+		jaco(0,0) = 1.0;
+		for(int i = 1; i < N-1; i++)
+		{
+			res[2*i] = eSi*(phi[i+1] - 2*phi[i] + phi[i-1]) + coef*(Ndon[i]-elec[i]);
+			jaco(2*i,2*i-2) = eSi;
+			jaco(2*i,2*i) = -2.0*eSi;
+			jaco(2*i,2*i+2) = eSi;
+			jaco(2*i,2*i+1) = -coef;
+		}
+		res[2*N-2] = phi[N-1] - thermal*log(Ndon[N-1]/ni);
+		jaco(2*N-2, 2*N-2) = 1.0;
+
+		res[1] = elec[0] - Ndon[0];
+		jaco(1,1) = 1.0;
+		for(int i = 1; i < N-1; i++)
+		{
+			n_av = 0.5*(elec[i+1]+elec[i]);
+			dphidx = (phi[i+1]-phi[i])/termx;
+			delecdx = (elec[i+1]-elec[i])/termx;
+			Jn = n_av * dphidx - thermal * delecdx;
+			res[2*i+1] = Jn;
+			jaco(2*i+1, 2*i+3) = 0.5*dphidx - thermal / termx;
+			jaco(2*i+1, 2*i+1) = 0.5*dphidx + thermal / termx;
+			jaco(2*i+1, 2*i+2) = n_av / termx;
+			jaco(2*i+1, 2*i) = - n_av / termx;
+			res[2*i+3] = -Jn;
+			jaco(2*i+3, 2*i+3) = -0.5*dphidx + thermal / termx;
+			jaco(2*i+3, 2*i+1) = -0.5*dphidx - thermal / termx;
+			jaco(2*i+3, 2*i+2) = - n_av / termx;
+			jaco(2*i+3, 2*i) = n_av / termx;
+		}
+		res[2*N-1] = elec[N-1] - Ndon[N-1];
+		jaco(2*N-1,2*N-1) = 1.0;
+
+		for(int i = 0; i < N; i++)
+		{
+			Cvector[2*i] = thermal;
+			Cvector[2*i+1] = sqrt(2*interface1*(Hdop*Hdop)+(N-interface1-interface2)*(Ldop*Ldop));
+		}
+		jaco.lambdiag(Cvector);
+		sum = jaco.abssum(1);
+		for(int i = 0; i < 2*N; i++) Rvector[i] = 1.0/sum;
+		jaco.lambdiag(Rvector);
+		for(int i = 0; i < 2*N; i++) res[i] *= Rvector[i];
+		update = -jaco / (res);
+		for(int i = 0; i < 2*N; i++) update[i] *= Cvector[i];
+		for(int i = 0; i < N; i++) phi[i] += update[2*i];
+		for(int i = 0; i < N; i++) elec[i] += update[2*i+1];
+	}
+
+	jaco.~LA();
+	return elec;
+}
+

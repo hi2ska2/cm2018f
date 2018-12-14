@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;HW11/functioncall.h&apos; to &apos;hw11.h&apos;" description="Rename resource &apos;functioncall.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="functioncall.h" name="hw11.h" stamp="1542530769797" updateReferences="true"/>
+</session>

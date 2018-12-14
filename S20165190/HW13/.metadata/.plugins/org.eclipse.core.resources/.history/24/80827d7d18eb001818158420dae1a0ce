@@ -1,0 +1,33 @@
+/*
+ * main.cpp
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+
+#include "hw11.h"
+
+int main(){
+
+	LA s1(3);
+	s1.setMat(0,0,2);
+	s1.setMat(1,1,4);
+	s1.setMat(2,2,1);
+
+	LA s2(3);
+	s2.setMat(0,0,1);
+	s2.setMat(1,1,1);
+	s2.setMat(2,2,1);
+
+
+	double *result, *b = new double[3];
+	for(int i=0; i < 3; i++) b[i] = i;
+
+	result = s1/b;
+
+	for(int i=0; i < 3; i++) cout << result[i] << endl;
+	return 0;
+}
+
+
+

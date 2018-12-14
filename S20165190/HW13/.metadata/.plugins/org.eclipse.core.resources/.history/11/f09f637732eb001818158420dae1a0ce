@@ -1,0 +1,25 @@
+/*
+ * const.cpp
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+
+#include "hw11.h"
+
+// Constants
+const double q = 1.602192e-19; // Elementary charge, C
+const double k_B = 1.380662e-23; // Boltzmann constant, J/K
+const double pi = 3.141592; // PI
+const double T = 300; // Temperature, K
+const double gamma = sqrt(1/(2*pi));
+
+// Settings
+const double H = 0.1; // (eV)
+
+
+// Discretization
+const int N = 31;
+const int interface1 = 10;
+const int interface2 = 20;
+

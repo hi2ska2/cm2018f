@@ -1,0 +1,66 @@
+/*
+ * functioncall.h
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+
+#ifndef HW11_H_
+#define HW11_H_
+
+
+#include <iostream>
+using namespace std;
+
+class LA {
+	private:
+		int size;
+		double *arr;
+
+	public:
+		LA(int N){
+			arr = new double[N*N];
+			for (int i = 0; i < N; i++) for(int j = 0; j < N; j++) *(arr+N*i+j) = 0;
+			size = N;
+		}
+
+		void setMat(int x, int y, double phi);
+
+		double getMat(int x, int y){
+			return *(arr+size*x+y);
+		}
+
+		double getSize(void){
+			return size;
+		}
+
+		Array2 operator- (){
+			Array2 temp(size);
+			for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = -(*this)(i,j);
+			return temp;
+		}
+
+		Array2 operator- (Array2& B){
+			if(size != B.getSize()) { cout << "Error (different size)" << endl; return 3;}
+			Array2 temp(size);
+			for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = (*this)(i,j) - B(i,j);
+			return temp;
+		}
+
+		Array2 operator+ (Array2& B){
+			if(size != B.getSize()) { cout << "Error (different size)" << endl; return 3;}
+			Array2 temp(size);
+			for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = (*this)(i,j) + B(i,j);
+			return temp;
+		}
+
+
+		double& operator() (int x, int y) {
+			return *(arr+size*x+y);
+		}
+
+
+};
+
+
+#endif /* HW11_H_ */

@@ -1,0 +1,44 @@
+/*
+ * hw11.cpp
+ *
+ *  Created on: 2018. 11. 18.
+ *      Author: han
+ */
+#include "hw11.h"
+
+		void LA::setMat(int x, int y, double phi){
+			*(arr+size*x+y) = phi;
+		}
+
+		double LA::getMat(int x, int y){
+			return *(arr+size*x+y);
+		}
+
+		double LA::getSize(void){
+			return size;
+		}
+
+		LA LA::operator- (){
+			LA temp(size);
+			for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = -(*this)(i,j);
+			return temp;
+		}
+
+		LA LA::operator- (LA& B){
+				if(size != B.getSize()) { cout << "Error (different size)" << endl; return 3;}
+				LA temp(size);
+				for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = (*this)(i,j) - B(i,j);
+				return temp;
+		}
+
+		LA LA::operator+ (LA& B){
+			if(size != B.getSize()) { cout << "Error (different size)" << endl; return 3;}
+			LA temp(size);
+			for(int i = 0; i < size; i++) for(int j = 0; j < size; j++) temp(i,j) = (*this)(i,j) + B(i,j);
+			return temp;
+		}
+
+		double& LA::operator() (int x, int y) {
+			return *(arr+size*x+y);
+		}
+
