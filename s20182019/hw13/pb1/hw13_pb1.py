@@ -9,6 +9,7 @@ T = 300.0
 VT = kB*T/q
 
 N = int(sys.argv[1])+1
+Dn = 0.01
 
 Nd_high = 0
 Nd_low = 0
@@ -113,63 +114,64 @@ J[N-1][N-1] = 1.0
 update = np.dot(inv(J),-res)
 elec = elec + update
 
-f = open("ED"+st1+"_"+str(N)+"_init.dat",'w')
-for i in range(N):
-    f.write("{}\t{}\n".format(i,elec[i]))
-f.close()
-
-
-print(phi)
 
 ### Coupled equation
 
-for iNewton in range(10):
-    res = np.zeros(shape=(2*N),dtype=np.float64)
-    J = np.zeros(shape=(2*N,2*N),dtype=np.float64)
-    res[0] = phi[0] - VT*np.log(Nd[0]/Ni)
-    J[0][0] = 1.0
-    for i in range(1,N-1):
-        res[2*i] = eps_si*(phi[i-1]-2.0*phi[i]+phi[i+1]) + coef*(Nd[i]-elec[i])
-        J[2*i][2*i-2] = eps_si
-        J[2*i][2*i] = -2.0*eps_si
-        J[2*i][2*i+2] = eps_si
-        J[2*i][2*i+1] = -coef
-    res[2*N-2] = phi[N-1] - VT*np.log(Nd[N-1]/Ni)
-    J[2*N-2][2*N-2] = 1.0
+V_grid = np.linspace(0,1,101)
+E_cur = np.zeros(shape=(101),dtype=np.float64)
+ind1 = 0
+print(V_grid)
+for V in V_grid:
+    J_c = np.zeros(shape=(N),dtype=np.float64)
+    for iNewton in range(10):
+        res = np.zeros(shape=(2*N),dtype=np.float64)
+        J = np.zeros(shape=(2*N,2*N),dtype=np.float64)
+        res[0] = phi[0] - VT*np.log(Nd[0]/Ni) - V
+        J[0][0] = 1.0
+        for i in range(1,N-1):
+            res[2*i] = eps_si*(phi[i-1]-2.0*phi[i]+phi[i+1]) + coef*(Nd[i]-elec[i])
+            J[2*i][2*i-2] = eps_si
+            J[2*i][2*i] = -2.0*eps_si
+            J[2*i][2*i+2] = eps_si
+            J[2*i][2*i+1] = -coef
+        res[2*N-2] = phi[N-1] - VT*np.log(Nd[N-1]/Ni)
+        J[2*N-2][2*N-2] = 1.0
+
+        for i in range(N-1):
+            n_av = 0.5*(elec[i+1]+elec[i])
+            dphidx = (phi[i+1]-phi[i])/dx
+            delecdx = (elec[i+1]-elec[i])/dx
+            Jn = n_av*dphidx - VT*delecdx
+            res[2*i+1] = res[2*i+1] + Jn
+            J[2*i+1][2*i+3] = J[2*i+1][2*i+3] + 0.5*dphidx - VT/dx
+            J[2*i+1][2*i+1] = J[2*i+1][2*i+1] + 0.5*dphidx + VT/dx
+            J[2*i+1][2*i+2] = J[2*i+1][2*i+2] + n_av/dx
+            J[2*i+1][2*i] = J[2*i+1][2*i] - n_av/dx
+            res[2*i+3] = res[2*i+3] - Jn
+            J[2*i+3][2*i+3] = J[2*i+3][2*i+3] - 0.5*dphidx + VT/dx
+            J[2*i+3][2*i+1] = J[2*i+3][2*i+1] - 0.5*dphidx - VT/dx
+            J[2*i+3][2*i+2] = J[2*i+3][2*i+2] - n_av/dx
+            J[2*i+3][2*i] = J[2*i+3][2*i] + n_av/dx
+        res[1] = elec[0] - Nd[0]
+        J[1][1] = 1.0
+        res[2*N-1] = elec[N-1] - Nd[N-1]
+        J[2*N-1][2*N-1] = 1.0
+
+        update = np.dot(inv(J),-res)
+        phi = phi + update[::2]
+        elec = elec + update[1::2]
+        print(np.linalg.norm(update[::2], np.inf))
 
     for i in range(N-1):
-        n_av = 0.5*(elec[i+1]+elec[i])
-        dphidx = (phi[i+1]-phi[i])/dx
-        delecdx = (elec[i+1]-elec[i])/dx
-        Jn = n_av*dphidx - VT*delecdx
-        res[2*i+1] = res[2*i+1] + Jn
-        J[2*i+1][2*i+3] = J[2*i+1][2*i+3] + 0.5*dphidx - VT/dx
-        J[2*i+1][2*i+1] = J[2*i+1][2*i+1] + 0.5*dphidx + VT/dx
-        J[2*i+1][2*i+2] = J[2*i+1][2*i+2] + n_av/dx
-        J[2*i+1][2*i] = J[2*i+1][2*i] - n_av/dx
-        res[2*i+3] = res[2*i+3] - Jn
-        J[2*i+3][2*i+3] = J[2*i+3][2*i+3] - 0.5*dphidx + VT/dx
-        J[2*i+3][2*i+1] = J[2*i+3][2*i+1] - 0.5*dphidx - VT/dx
-        J[2*i+3][2*i+2] = J[2*i+3][2*i+2] - n_av/dx
-        J[2*i+3][2*i] = J[2*i+3][2*i] + n_av/dx
-    res[1] = elec[0] - Nd[0]
-    J[1][1] = 1.0
-    res[2*N-1] = elec[N-1] - Nd[N-1]
-    J[2*N-1][2*N-1] = 1.0
+        k = (phi[i+1] - phi[i])/VT
+        J_c[i] = (q*Dn/dx)*(elec[i+1]*k/(np.exp(k)-1) + elec[i]*k/(np.exp(-k)-1))
+    E_cur[ind1] = -J_c[N-2]
+    ind1 = ind1 + 1
 
-    update = np.dot(inv(J),-res)
-    phi = phi + update[::2]
-    elec = elec + update[1::2]
-    print(np.linalg.norm(update[::2], np.inf))
+f = open("current_"+st1+".dat",'w')
 
-#f1 = open("a.dat", 'w')
-f2 = open("ED_"+st1+"_"+str(N)+"_after.dat", 'w')
-
-for i in range(N):
-#    f1.write("{}\t{}\n".format(i,phi[i]))
-    f2.write("{}\t{}\n".format(i,elec[i]))
-
-#f1.close()
-f2.close()
+for i in range(101):
+    f.write("{}\t{}\n".format(i*0.01,-E_cur[i]))
+    
 
 
