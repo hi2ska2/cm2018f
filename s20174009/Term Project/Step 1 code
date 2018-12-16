@@ -130,6 +130,7 @@ for newton = 1:5
 end
 elec_2 = log(ni*exp(phi/thermal));
 surf(elec_2)
+%%surf(phi)
 
 
 
