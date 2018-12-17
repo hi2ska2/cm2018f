@@ -35,16 +35,18 @@ end
 %% for checking
 % for ix = 1:nx
 %     for iy = 1: ny
-% N_c(iy,ix) = Ndon((iy-1)*nx+ix,1);
+% N_c(iy,ix) = phi((iy-1)*nx+ix,1);
 %     end
 % end
 %%
-Vg = 1;
+for ii = 1:10
+Vg = (ii-1)/10;
 phi = zeros(nx*ny,1);
+phi(:,1) = 0.33374+Vg;
 
 for ix = 2:nx-1
 for iy = y_12:y_23
-phi((iy-1)*nx+ix,1) = 0.33374+Vg+thermal*log(Ndon((iy-1)*nx+ix,1)/ni);
+phi((iy-1)*nx+ix,1) = phi((iy-1)*nx+ix,1) + thermal*log(Ndon((iy-1)*nx+ix,1)/ni);
 end
 end
 
@@ -113,11 +115,13 @@ for iy = 2:ny-1
      end
 end
 end
+
+
 %      %        %         %   boundary  %    %    %   %
 %%%%%%%%%%%%     %bottom        %%%%%%%%%%%%
 for ix = 2 : x_23 - 1
     n = ix;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 0.5;
     Jaco(n,n + nx) = 1;
     Jaco(n,n) = -2;
@@ -126,13 +130,13 @@ end
 
 for ix = x_12 + 1 : x_23 - 1
     n = ix;
-    res(ix,1) = phi(ix,1) - (0.33374+Vg) - thermal*log(Ndon(ix,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n) = 1;
 end
 
 for ix = x_23 : nx - 1
     n = ix;
-    res(ix,1) = phi(ix,1) - (0.33374+Vg) - thermal*log(Ndon(ix,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 0.5;
     Jaco(n,n + nx) = 1;
     Jaco(n,n) = -2;
@@ -140,20 +144,20 @@ for ix = x_23 : nx - 1
 end
 
 
-    res(1,1) = phi(1,1) - (0.33374+Vg) - thermal*log(Ndon(1,1)/ni);
+    res(1,1) = phi(1,1) - (0.33374+Vg);
     Jaco(1,1 + 1) = 1;
     Jaco(1,1 + nx) = 1;
     Jaco(1,1) = -2;
     
-    res(nx,1) = phi(nx,1) - (0.33374+Vg) - thermal*log(Ndon(nx,1)/ni);
-    Jaco(nx,nx + 1) = 1;
+    res(nx,1) = phi(nx,1) - (0.33374+Vg);
     Jaco(nx,nx + nx) = 1;
     Jaco(nx,nx) = -2;
+    Jaco(nx,nx - 1) = 1;
 
 %%%%%%%%        top        %%%%%%%%%
 for ix = 2:x_12
     n = (ny-1)*nx+ix;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 0.5;
     Jaco(n,n - nx) = 1;
     Jaco(n,n) = -2;
@@ -162,34 +166,34 @@ end
 
 for ix = x_12 + 1 : x_23 - 1
     n = (ny-1)*nx+ix;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n) = 1;
 end
 
 for ix = x_23 : nx-1
     n = (ny-1)*nx+ix;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 0.5;
     Jaco(n,n - nx) = 1;
     Jaco(n,n) = -2;
     Jaco(n,n - 1) = 0.5;
 end
 
-    res((ny-1)*nx + 1, 1) = phi((ny-1)*nx+1,1) - (0.33374+Vg) - thermal*log(Ndon((ny-1)*nx+1,1)/ni);
+    res((ny-1)*nx + 1, 1) = phi((ny-1)*nx+1,1) - (0.33374+Vg);
     Jaco((ny-1)*nx + 1, (ny-1)*nx + 1 + 1) = 1;
-    Jaco((ny-1-1)*nx + 1, (ny-1-1)*nx + 1) = 1;
-    Jaco((ny-1)*nx + 1, 1) = -2;
+    Jaco((ny-1)*nx + 1, (ny-1)*nx + 1) = -2;
+    Jaco((ny-1)*nx + 1, (ny-1-1)*nx + 1) = 1;
     
-    res((ny-1)*nx+nx,1) = phi((ny-1)*nx+nx,1) - (0.33374+Vg) - thermal*log(Ndon((ny-1)*nx+nx,1)/ni);
-    Jaco((ny-1)*nx+nx, (ny-1)*nx+nx - 1 ) = 1;
-    Jaco((ny-1)*nx+nx, (ny-1-1)*nx+nx) = 1;
-    Jaco((ny-1)*nx+nx,(ny-1)*nx+nx) = -2;
+    res((ny-1)*nx+nx,1) = phi((ny-1)*nx+nx,1) - (0.33374+Vg);
+    Jaco((ny-1)*nx + nx, (ny-1)*nx + nx - 1 ) = 1;
+    Jaco((ny-1)*nx + nx, (ny-1-1)*nx + nx) = 1;
+    Jaco((ny-1)*nx + nx, (ny-1)*nx + nx) = -2;
 
 %%%%%%%%%%      left       %%%%%%%%%%%%
 
 for iy = 2:y_12
     n = (iy-1)*nx+1;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 1;
     Jaco(n,n + nx) = 0.5;
     Jaco(n,n) = -2;
@@ -205,7 +209,7 @@ end
 
 for iy = y_23:ny-1
     n = (iy-1)*nx+1;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + 1) = 1;
     Jaco(n,n + nx) = 0.5;
     Jaco(n,n) = -2;
@@ -217,7 +221,7 @@ end
 
 for iy = 2:y_12
     n = (iy-1)*nx+nx;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     
     Jaco(n,n + nx) = 0.5;
     Jaco(n,n) = -2;
@@ -234,7 +238,7 @@ end
 
 for iy = y_23:ny-1
     n = (iy-1)*nx+nx;
-    res(n,1) = phi(n,1) - (0.33374+Vg) - thermal*log(Ndon(n,1)/ni);
+    res(n,1) = phi(n,1) - (0.33374+Vg);
     Jaco(n,n + nx) = 0.5;
     Jaco(n,n) = -2;
     Jaco(n,n - nx) = 0.5;
@@ -249,13 +253,37 @@ phi = phi + update;
 
 end
 
-psi = zeros(nx,ny);
-for i = 1:ny
-psi(1:9,i)=phi((i-1)*nx+1:(i-1)*nx+9);
+elec = ni*exp(phi/thermal);
+
+for ix = 1:nx
+     for iy = 1: ny
+ phi_3D(iy,ix,ii) = phi((iy-1)*nx+ix,1);
+     end
 end
 
+for ix = 1:nx
+     for iy = 1: ny
+ elec_3D(iy,ix,ii) = elec((iy-1)*nx+ix,1);
+     end
+end
+
+phi_stack(:,1,ii) = phi(:,1);
+elec_stack(:,1,ii) = phi(:,1);
+
+end
 figure(201)
-surf(psi');
-xlabel('y-axis(delta)');
-ylabel('z-axis(delta)');
+surf(phi_3D(y_12:y_23,2:nx-1,1));
+shading interp;
+xlabel('x-axis(delta)');
+ylabel('y-axis(delta)');
+zlabel('phi (V)');
+colorbar;
+
+
+figure(202)
+surf(elec_3D(y_12:y_23,2:nx-1,1));
+shading interp;
+xlabel('x-axis(delta)');
+ylabel('y-axis(delta)');
+zlabel('electron density (m^-^3)');
 colorbar;
