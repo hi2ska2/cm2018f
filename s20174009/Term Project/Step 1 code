@@ -1,0 +1,141 @@
+clear all
+set(0, 'DefaultFigureRenderer', 'painters');
+h = 6.626176e-34; % Planck constant, J s
+hbar = h / (2*pi); % Reduced Planck constant, J s
+q = 1.602192e-19; % Elementary charge, C
+m0 = 9.109534e-31; % Electron rest mass, kg
+k_B = 1.380662e-23; % Boltzmann constant, J/K
+eps0 = 8.854187817e-12; % Vacuum permittivity, F/m
+T = 300.0; % Temperature, K
+thermal = k_B*T/q; % Thermal voltage, V
+
+
+
+N_x = 121;
+Deltax = 1e-9;
+x_12 = 41; %At x=40nm
+x_23 = 81; %At x=80nm
+
+N_y = 61;
+interface1 = 6; % At y=5nm
+interface2 = 56; % At y= 55nm
+
+Ndon = zeros(N_x,N_y);
+Ndon(x_12+1:x_23-1,interface1:interface2) = 2e23; %2e17 /cm^3;
+Ndon(1:x_12,interface1:interface2) = 5e25; %5e19 /cm^3;
+Ndon(x_23:N_x,interface1:interface2) = 5e25; %5e19 /cm^3;
+Nacc = 2e23;
+elec = Ndon;
+
+x = Deltax*transpose([0:N_x-1]);
+ni = 1.075e16; % 1.075e10 /cm^3
+coef = Deltax*Deltax*q/eps0;
+eps_si = 11.7; eps_ox = 3.9; % Relative permittivity
+
+
+
+G = 1;
+    phi = zeros(N_x,N_y);
+    phi(x_12:x_23,1) = (G-1)/10; phi(x_12:x_23,N_y) = (G-1)/10;
+    phiprime = phi;
+
+for newton = 1:100       
+    for j = 1 : N_x
+        for i = 1: N_y
+            if 1<i && i<N_y && 1<j && j<N_x % bulk
+                    phiprime(j,i) = 0.25*(phi(j+1,i) + phi(j,i+1) + phi(j-1,i) + phi(j,i-1));
+            elseif i==1 && 1<j && j<N_x % leftside
+                    phiprime(j,i) = 0.25*(2*phi(j,i+1)+phi(j+1,i)+phi(j-1,i));
+            elseif i==N_y && 1<j && j<N_x % right side 
+                    phiprime(j,i) = 0.25*(2*phi(j,i-1)+phi(j+1,i)+phi(j-1,i));                   
+            elseif j==1 && 2<i && i<N_y-1 % top side
+                    phiprime(j,i) = 0.25*(2*phi(j+1,i)+phi(j,i+1)+phi(j,i-1));
+            elseif j==N_x && 2<i && i<N_y-1 % bottom side
+                    phiprime(j,i) = 0.25*(2*phi(j-1,i)+phi(j,i+1)+phi(j,i-1));
+            end
+        end
+    end
+    phi = phiprime;
+end
+
+phi(:,interface1:interface2) = phi(:,interface1:interface2) + thermal*log(Ndon(:,interface1:interface2)/ni);           
+for newton = 1:5  
+       for jj = interface1:interface2
+                 
+            res = zeros(N_x,1);
+            Jaco = sparse(N_x,N_x);
+            res(1,1) = phi(1,jj) - thermal*log(elec(1,jj)/ni);
+            Jaco(1,1) = 1.0;
+            res(N_x,1) = phi(N_x,jj) - thermal*log(elec(N_x,jj)/ni);
+            Jaco(N_x,N_x) = 1.0;
+            
+            for ii=2:N_x-1
+                res(ii,1) = eps_si*(phi(ii+1,jj)-2*phi(ii,jj)+phi(ii-1,jj));
+                Jaco(ii,ii-1) = eps_si;
+                Jaco(ii,ii ) = -2*eps_si;
+                Jaco(ii,ii+1) = eps_si;
+            end
+                
+            for ii=2:N_x-1
+                res(ii,1) = res(ii,1) - coef*(-elec(ii,jj)+ni*exp(phi(ii,jj)/thermal));
+                Jaco(ii,ii) = Jaco(ii,ii) - coef*ni*exp(phi(ii,jj)/thermal)/thermal;
+            end
+            update = Jaco \ (-res);
+            phi(:,jj) = phi(:,jj) + update;
+            elec(:,jj) = ni*exp(phi(:,jj)/thermal);
+            
+       end
+       
+       
+       for k = 1 : N_x
+            res_2 = zeros(N_y,1);
+            Jaco_2 = sparse(N_y,N_y);
+            Jaco_2(1,1) = 1.0;
+            Jaco_2(N_y,N_y) = 1.0;
+            res_2(1,1) = phi(k,1);
+            res_2(N_y,1) = res_2(1,1);
+            
+            for ii=2:N_y-1
+                if(ii< interface1 || ii> interface2)
+                    res_2(ii,1) = eps_ox*phi(k,ii+1) - 2*eps_ox*phi(k,ii) + eps_ox*phi(k,ii-1);
+                    Jaco_2(ii,ii-1) = eps_ox; Jaco_2(ii,ii) = -2*eps_ox; Jaco_2(ii,ii+1) = eps_ox;
+                elseif(ii==interface1)
+                    res_2(ii,1) = eps_si*phi(k,ii+1) - (eps_si+eps_ox)*phi(k,ii) + eps_ox*phi(k,ii-1);
+                    Jaco_2(ii,ii-1) = eps_ox; Jaco_2(ii,ii) = -(eps_si+eps_ox); Jaco_2(ii,ii+1) = eps_si;
+                elseif(ii==interface2)
+                    res_2(ii,1) = eps_ox*phi(k,ii+1) - (eps_ox+eps_si)*phi(k,ii) + eps_si*phi(k,ii-1);
+                    Jaco_2(ii,ii-1) = eps_si; Jaco_2(ii,ii) = -(eps_ox+eps_si); Jaco_2(ii,ii+1) = eps_ox;
+                else
+                    res_2(ii,1) = eps_si*phi(k,ii+1) - 2*eps_si*phi(k,ii) + eps_si*phi(k,ii-1);
+                    Jaco_2(ii,ii-1) = eps_si; Jaco_2(ii,ii) = -2*eps_si; Jaco_2(ii,ii+1) = eps_si;
+                end
+            end
+            
+            for ii=interface1:interface2
+                if (ii==interface1)
+                    res_2(ii,1) = res_2(ii,1) - coef*(elec(k,ii) + ni*exp(phi(k,ii)/thermal))*0.5;
+                    Jaco_2(ii,ii) = Jaco_2(ii,ii) - coef*ni*exp(phi(k,ii)/thermal)/thermal*0.5;
+                elseif(ii==interface2)
+                    res_2(ii,1) = res_2(ii,1) - coef*(elec(k,ii) + ni*exp(phi(k,ii)/thermal))*0.5;
+                    Jaco_2(ii,ii) = Jaco_2(ii,ii) - coef*ni*exp(phi(k,ii)/thermal)/thermal*0.5;
+                else
+                    res_2(ii,1) = res_2(ii,1) - coef*(elec(k,ii) + ni*exp(phi(k,ii)/thermal));
+                    Jaco_2(ii,ii) = Jaco_2(ii,ii) - coef*ni*exp(phi(k,ii)/thermal)/thermal;
+                end
+            end
+            update_2 = Jaco_2 \ (-res_2);
+            phi(k,:) = phi(k,:) + update_2';
+   end
+
+end
+elec_2 = log(ni*exp(phi/thermal));
+surf(elec_2)
+%%surf(phi)
+
+
+
+title('Potential');
+xlabel('Position y (nm)');
+ylabel('Position x (nm)');
+zlabel('Potential (V)');
+
